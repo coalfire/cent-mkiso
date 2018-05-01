@@ -1,0 +1,98 @@
+#!/bin/sh
+
+usage="usage: $0 [-u]"
+
+arch=x86_64
+mirror=http://mirrors.cmich.edu/centos/7/isos
+install_type=NetInstall
+readme=0_README.txt
+sumfile=sha256sum.txt
+
+tmp_dir="./new_iso"
+iso_dir="./iso"
+
+warn() {
+    echo "$@" >&2
+}
+
+die() {
+    status=$1
+    shift
+    warn "$@"
+    exit $status
+}
+
+get_current_iso_name() {
+    iso="$(curl "$mirror/$arch/$readme" | grep "CentOS-7-$arch-$install_type")"
+}
+
+fetch_iso() {
+    test -f $iso && return
+    curl -O $mirror/$arch/$iso
+    curl -O $mirror/$arch/$sumfile
+    grep "$iso" $sumfile | sha256sum -c - || die 8 "$iso download incorrect"
+}
+
+replace_config() {
+    if [ "$usb" ]; then
+        sed 's/ks=cdrom:/ks=hd:LABEL='"$volume"':/' "$config" >"$tmp_dir/isolinux/isolinux.cfg"
+    else
+        cp "$config" "$tmp_dir/isolinux/"
+    fi
+}
+
+create_local_kickstart() {
+    cp "$kickstart" "$tmp_dir/ks.cfg"
+}
+
+prepare_for_usb() {
+    isohybrid "$volume".iso
+}
+
+kickstart=kickstart.ks
+config="$PWD/iso/isolinux/isolinux.cfg"
+volume=centos
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        -u)
+            usb=true
+            shift
+            ;;
+        -k)
+            kickstart="$2"
+            shift 2
+            ;;
+        -v) volume="$2"
+            shift 2
+            ;;
+        -c) config="$2"
+            shift 2
+            ;;
+        *)
+            die 1 "$usage"
+            ;;
+    esac
+done
+
+mkdir -p "$iso_dir" || die 2 "Can't make $iso_dir"
+
+get_current_iso_name
+fetch_iso
+
+mount -t iso9660 -o loop "$PWD/$iso" "$PWD/$iso_dir"
+
+cp -a "$iso_dir" "$tmp_dir"
+umount "$PWD/$iso"
+
+replace_config
+create_local_kickstart
+
+mkisofs -V "$volume"  -o "$volume".iso -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -R -J -v -T "$tmp_dir/"
+
+test "$usb" && prepare_for_usb
+
+#FIXME 
+# consider:
+#implantisomd5 $volume.iso
+test "$usb" && echo "sudo dd if=$volume.iso of=/dev/sdb"
