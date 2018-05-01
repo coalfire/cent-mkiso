@@ -1,0 +1,5 @@
+*.iso
+iso/
+new_iso/
+sha256sum.txt
+
