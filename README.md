@@ -7,7 +7,7 @@ Usage
 -----
 
 ```
-  sudo ./mkiso [-k KICKSTART] [-c ISOLINUX_CONFIG] [-v VOLUME_NAME] [-u]
+  sudo ./cent-mkiso [-k KICKSTART] [-c ISOLINUX_CONFIG] [-v VOLUME_NAME] [-u]
 ```
 
 Dependancies
