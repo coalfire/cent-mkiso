@@ -23,3 +23,4 @@ TODO
 
 * flag, config, or environmental variable for mirror.
 * update mirror in kickstart
+* Makefile install
