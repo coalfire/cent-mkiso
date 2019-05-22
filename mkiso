@@ -3,13 +3,17 @@
 usage="usage: $0 [-u]"
 
 arch=x86_64
-mirror=http://mirrors.centos.webair.com/centos/7/isos
+mirror=http://centos.s.uw.edu/centos/7/isos/
 install_type=NetInstall
 readme=0_README.txt
 sumfile=sha256sum.txt
 
 tmp_dir="./new_iso"
 iso_dir="./iso"
+
+mkdir $tmp_dir
+mkdir $iso_dir
+
 
 warn() {
     echo "$@" >&2
