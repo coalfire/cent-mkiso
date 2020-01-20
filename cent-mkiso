@@ -46,7 +46,33 @@ replace_config() {
 }
 
 create_local_kickstart() {
-    cp "$kickstart" "$tmp_dir/ks.cfg"
+	rm -f "$tmp_dir/ks.cfg"
+
+    if [ "$set_root" ]; then
+        python3 <<-ROOT >>"$tmp_dir/ks.cfg"
+		import crypt,getpass
+		pw = getpass.getpass("root password: ")
+		crypted = crypt.crypt(pw)
+		rootstring = "rootpw --iscrypted {pw}".format(pw=crypted)
+		print(rootstring)
+		ROOT
+    fi
+    if [ "$set_user" ]; then
+        python3 <<-USER >>"$tmp_dir/ks.cfg"
+		import crypt,getpass
+		full = getpass.getpass("user full name: ")
+		user = getpass.getpass("user name: ")
+		pw = getpass.getpass("user password: ")
+		crypted = crypt.crypt(pw)
+		userstring = "user --groups=wheel --name={user} --password={pw} --iscrypted --gecos={full}".format(
+		  user=user,
+		  pw=crypted,
+		  full=full
+		  )
+		print(userstring)
+		USER
+    fi
+    cat "$kickstart" >>"$tmp_dir/ks.cfg"
 }
 
 prepare_for_usb() {
@@ -67,12 +93,22 @@ while [ $# -gt 0 ]; do
             kickstart="$2"
             shift 2
             ;;
-        -v) volume="$2"
+        -v)
+            volume="$2"
             shift 2
             ;;
-        -c) config="$2"
+        -c)
+            config="$2"
             shift 2
             ;;
+        --set-root-pass)
+           set_root=true
+           shift
+           ;;
+        --set-user)
+           set_user=true
+           shift
+           ;;
         *)
             die 1 "$usage"
             ;;
