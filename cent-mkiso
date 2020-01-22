@@ -72,7 +72,20 @@ create_local_kickstart() {
 		print(userstring)
 		USER
     fi
-    cat "$kickstart" >>"$tmp_dir/ks.cfg"
+    awk '{ print }
+         /^%post/ {
+             while ((getline < "'"$post_insert"'") > 0)
+                 { print }
+         }
+         /^%packages/ {
+             while ((getline < "'"$packages_insert"'") > 0)
+                 { print }
+         }
+         /^%addon/ {
+             while ((getline < "'"$addon_insert"'") > 0)
+                 { print }
+         }
+         ' "$kickstart" >>"$tmp_dir/ks.cfg"
 }
 
 prepare_for_usb() {
@@ -86,32 +99,44 @@ volume=centos
 while [ $# -gt 0 ]; do
     case $1 in
         -u)
-            usb=true
-            shift
-            ;;
+          usb=true
+          shift
+          ;;
         -k)
-            kickstart="$2"
-            shift 2
-            ;;
+          kickstart="$2"
+          shift 2
+          ;;
         -v)
-            volume="$2"
-            shift 2
-            ;;
+          volume="$2"
+          shift 2
+          ;;
         -c)
-            config="$2"
-            shift 2
-            ;;
+          config="$2"
+          shift 2
+          ;;
         --set-root-pass)
-           set_root=true
-           shift
-           ;;
+          set_root=true
+          shift
+          ;;
         --set-user)
-           set_user=true
-           shift
-           ;;
+          set_user=true
+          shift
+          ;;
+        --post-insert)
+          post_insert="$2"
+          shift 2
+          ;;
+        --packages-insert)
+          packages_insert="$2"
+          shift 2
+          ;;
+        --addons-insert)
+          addons_insert="$2"
+          shift 2
+          ;;
         *)
-            die 1 "$usage"
-            ;;
+          die 1 "$usage"
+          ;;
     esac
 done
 
