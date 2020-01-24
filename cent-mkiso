@@ -9,11 +9,9 @@ readme=0_README.txt
 sumfile=sha256sum.txt
 
 tmp_dir="./new_iso"
-iso_dir="./iso"
+iso_dir="$(mktemp -d)"
 
 mkdir $tmp_dir
-mkdir $iso_dir
-
 
 warn() {
     echo "$@" >&2
@@ -154,10 +152,10 @@ mkdir -p "$iso_dir" || die 2 "Can't make $iso_dir"
 get_current_iso_name
 fetch_iso
 
-mount -t iso9660 -o loop "$PWD/$iso" "$PWD/$iso_dir"
+mount -t iso9660 -o loop "$iso" "$iso_dir"
 
 cp -a $iso_dir/* "$tmp_dir"
-umount "$PWD/$iso"
+umount "$iso"
 
 replace_config
 create_local_kickstart
